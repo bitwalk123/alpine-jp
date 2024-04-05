@@ -1,0 +1,43 @@
+#!/bin/sh
+# This script is tested on the Alpine Linux 3.19.1.
+
+REPOSITORIES=/atc/apk/repositories
+IBUSCONF=/etc/ibus-conf
+
+echo -e '\n### Enable community repository'
+if [ -f $REPOSITORIES ]; then
+	sed -i 's/^#\(http:\/\/.*community$\)/\1/g' $REPOSITORIES
+	cat $REPOSITORIES
+	apk update
+	apk upgrade
+fi
+
+echo -e '\n### Setup base X.Org'
+setup-xorg-base
+
+echo -e '\n### Setup D-Bus'
+apk add dbus dbus-x11
+rc-update add dbus
+rc-service dbus start
+
+echo -e '\n### Setup udev'
+setup-devd udev
+
+echo -e '\n### Install elogind'
+apk add elogind polkit-elogind
+
+echo -e '\n### Install Japanese fonts'
+apk add font-noto-cjk font-noto-cjk-extra
+
+echo -e '\n### Install Anthy'
+apk add ibus-anthy dbus-x11 zenity
+
+echo -e '\n### Install Xfce4'
+apk add xfce4 xfce4-terminal xfce4-screensaver lightdm-gtk-greeter
+rc-update add lightdm
+
+echo -e '\n### Add /etc/ibus-conf file'
+echo -e 'export GTK_IM_MODULE=ibus\nexport XMODIFIERS=@im=ibus\nexport QT_IM_MODULE=ibus' > $IBUSCONF
+
+echo -e '\n### Completed! Please reboot.'
+
